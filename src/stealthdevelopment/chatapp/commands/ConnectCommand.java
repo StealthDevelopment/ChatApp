@@ -1,5 +1,7 @@
 package stealthdevelopment.chatapp.commands;
 
+import java.io.IOException;
+
 import eu.derzauberer.javautils.util.Command;
 import eu.derzauberer.javautils.util.Sender;
 import eu.derzauberer.javautils.util.Sender.MessageType;
@@ -25,10 +27,11 @@ public class ConnectCommand implements Command {
 			return false;
 		} else {
 			sender.sendMessage(MessageType.INFO, "Try to connect to " + args[0] + ":" + args[1] + " !");
-			if (Main.setClient(args[0], Integer.parseInt(args[1]))) {
+			try {
+				Main.setClient(args[0], Integer.parseInt(args[1]));
 				sender.sendMessage(MessageType.INFO, "Connected!");
 				return true;
-			} else {
+			} catch (IOException exception) {
 				sender.sendMessage(MessageType.ERROR, "Can't connect to server!");
 				return false;
 			}

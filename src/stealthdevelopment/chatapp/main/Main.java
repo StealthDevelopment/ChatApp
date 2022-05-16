@@ -3,7 +3,6 @@ package stealthdevelopment.chatapp.main;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
-
 import eu.derzauberer.javautils.events.ClientConnectEvent;
 import eu.derzauberer.javautils.events.ClientDisconnectEvent;
 import eu.derzauberer.javautils.events.ClientDisconnectEvent.DisconnectCause;
@@ -13,57 +12,41 @@ import eu.derzauberer.javautils.handler.CommandHandler;
 import eu.derzauberer.javautils.sockets.Client;
 import eu.derzauberer.javautils.sockets.Server;
 import eu.derzauberer.javautils.util.Console;
-import eu.derzauberer.javautils.util.DataUtil;
+import eu.derzauberer.javautils.util.Sender;
 import eu.derzauberer.javautils.util.Sender.MessageType;
 import stealthdevelopment.chatapp.commands.ConnectCommand;
+import stealthdevelopment.chatapp.commands.HostCommand;
 
 public class Main {
 	
+	private static boolean connected = false;
 	private static Server server;
 	private static Client client;
-	private static CommandHandler commands;
-	private static Console console;
+	private static Console console = new Console();
+	private static CommandHandler clientCommands = new CommandHandler();
+	private static CommandHandler serverCommands = new CommandHandler();
 	
 	private static HashMap<Client, String> names = new HashMap<>();
 	
 	public static void main(String[] args) {
-		commands = new CommandHandler();
-		commands.registerCommand("/connect", new ConnectCommand());
-		console = new Console();
-		console.setOnInput(Main::onClientConsoleInput);
-		if (args.length == 1) {
-			if (DataUtil.isIntegerString(args[0])) {
-				try {
-					server = new Server(Integer.parseInt(args[0]));
-					console.setOnInput(Main::onServerConsoleInput);
-					server.setOnMessageReceive(Main::onServerMessageReceive);
-					server.setOnClientConnect(Main::onServerClientConnect);
-					server.setOnClientDisconnect(Main::onServerClientDisconnect);
-					console.sendMessage(MessageType.INFO, "Running server on " + server.getAdress() + ":" + server.getLocalPort() + "!");
-				} catch (NumberFormatException | IOException exception) {
-					console.sendMessage(MessageType.ERROR, exception.getMessage());
-				}
-			} else {
-				console.sendMessage(MessageType.ERROR, args[0] + "is not a valid port number!");
-			}
-		}
+		clientCommands.registerCommand("/exit", (Sender sender, String label, String[] argss) -> {System.exit(0); return true;});
+		clientCommands.registerCommand("/connect", new ConnectCommand());
+		clientCommands.registerCommand("/host", new HostCommand());
+		clientCommands.setOnCommandNotFound(event -> {
+			if (connected) client.sendMessage(event.getString()); 
+		});
+		console.setOnInput(Main::onConsoleInput);
+		console.sendMessage("Welcome in ChatApp!");
 	}
 	
-	public static void onClientConsoleInput(ConsoleInputEvent event) {
-		if (event.getInput().startsWith("/exit")) System.exit(0);
-		else if (event.getInput().startsWith("/connect")) commands.executeCommand(console, event.getInput());
+	public static void onConsoleInput(ConsoleInputEvent event) {
+		if (event.getInput().startsWith("/")) clientCommands.executeCommand(console, event.getInput());
 		else if (client != null) client.sendMessage(event.getInput()); 
-	}
-	
-	public static void onServerConsoleInput(ConsoleInputEvent event) {
-		if (event.getInput().startsWith("/exit")) System.exit(0);
-		else if (event.getInput().startsWith("/")) commands.executeCommand(console, event.getInput());
-		else server.sendMessage("Server : " + event.getInput()); 
 	}
 	
 	public static void onServerMessageReceive(ClientMessageReceiveEvent event) {
 		if (event.getMessage().startsWith("/")) {
-			commands.executeCommand(event.getClient(), event.getMessage());
+			serverCommands.executeCommand(event.getClient(), event.getMessage());
 			console.sendMessage(MessageType.INFO, names.get(event.getClient()) + ": " + "run command " + event.getMessage());
 		} else {
 			server.sendMessage(names.get(event.getClient()) + ": " + event.getMessage());
@@ -92,27 +75,34 @@ public class Main {
 		}
 	}
 	
+	public static void setServer(int port) throws IOException {
+		server = new Server(port);
+		server.setOnMessageReceive(Main::onServerMessageReceive);
+		server.setOnClientConnect(Main::onServerClientConnect);
+		server.setOnClientDisconnect(Main::onServerClientDisconnect);
+	}
+	
 	public static Server getServer() {
 		return server;
 	}
 	
-	public static boolean setClient(String adress, int port) {
-		try {
-			client = new Client(adress, port);
-			client.setOnMessageReceive(event -> console.sendMessage(MessageType.DEFAULT, event.getMessage()));
-			client.setOnClientDisconnect(event -> console.sendMessage(MessageType.INFO, "Disconnected!"));
-			return true;
-		} catch (IOException exception) {
-			return false;
-		}
+	public static void setClient(String adress, int port) throws IOException {
+		client = new Client(adress, port);
+		client.setOnMessageReceive(event -> console.sendMessage(MessageType.DEFAULT, event.getMessage()));
+		client.setOnClientDisconnect(event -> console.sendMessage(MessageType.INFO, "Disconnected!"));
+		connected = true;
 	}
 	
 	public static Client getClient() {
 		return client;
 	}
 	
-	public static CommandHandler getCommands() {
-		return commands;
+	public static CommandHandler getClientCommands() {
+		return clientCommands;
+	}
+	
+	public static CommandHandler getServerCommands() {
+		return serverCommands;
 	}
 	
 	public static Console getConsole() {
