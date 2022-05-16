@@ -15,6 +15,7 @@ import eu.derzauberer.javautils.util.Console;
 import eu.derzauberer.javautils.util.Sender;
 import eu.derzauberer.javautils.util.Sender.MessageType;
 import stealthdevelopment.chatapp.commands.ConnectCommand;
+import stealthdevelopment.chatapp.commands.DisconnectCommand;
 import stealthdevelopment.chatapp.commands.HostCommand;
 
 public class Main {
@@ -32,6 +33,7 @@ public class Main {
 		clientCommands.registerCommand("/exit", (Sender sender, String label, String[] argss) -> {System.exit(0); return true;});
 		clientCommands.registerCommand("/connect", new ConnectCommand());
 		clientCommands.registerCommand("/host", new HostCommand());
+		clientCommands.registerCommand("/disconnect", new DisconnectCommand());
 		clientCommands.setOnCommandNotFound(event -> {
 			if (connected) client.sendMessage(event.getString()); 
 		});
@@ -82,6 +84,11 @@ public class Main {
 		server.setOnClientDisconnect(Main::onServerClientDisconnect);
 	}
 	
+	public static void disconnectServer() throws IOException {
+		server.close();
+		server = null;
+	}
+	
 	public static Server getServer() {
 		return server;
 	}
@@ -91,6 +98,12 @@ public class Main {
 		client.setOnMessageReceive(event -> console.sendMessage(MessageType.DEFAULT, event.getMessage()));
 		client.setOnClientDisconnect(event -> console.sendMessage(MessageType.INFO, "Disconnected!"));
 		connected = true;
+	}
+	
+	public static void disconnectClient() throws IOException {
+		client.close();
+		client = null;
+		connected = false;
 	}
 	
 	public static Client getClient() {

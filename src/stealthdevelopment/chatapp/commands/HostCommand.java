@@ -14,10 +14,10 @@ public class HostCommand implements Command {
 	public boolean onCommand(Sender sender, String label, String[] args) throws Exception {
 		if (args.length < 1) {
 			sender.sendMessage(MessageType.ERROR, "Not enough arguments!");
-			return false;
 		} else if (!DataUtil.isIntegerString(args[0])) {
 			sender.sendMessage(MessageType.ERROR, args[0] + " is not an integer!");
-			return false;
+		} else if (Main.getClient() != null || Main.getServer() != null) {
+			sender.sendMessage(MessageType.ERROR, "Server is already running!");
 		} else {
 			try {
 				Main.setServer(Integer.parseInt(args[0]));
@@ -25,9 +25,9 @@ public class HostCommand implements Command {
 				return true;
 			} catch (IOException exception) {
 				sender.sendMessage(MessageType.ERROR, exception.getMessage());
-				return false;
 			}	
 		}
+		return false;
 	}
 
 }

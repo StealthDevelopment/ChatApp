@@ -13,29 +13,25 @@ public class ConnectCommand implements Command {
 	public boolean onCommand(Sender sender, String label, String[] args) throws Exception {
 		if (Main.getServer() != null) {
 			sender.sendMessage(MessageType.ERROR, "A only a client can connect to a server!");
-			return false;
-		}
-		if (Main.getClient() != null) {
+		} else if (Main.getClient() != null) {
 			sender.sendMessage(MessageType.ERROR, "You are already connected!");
-			return false;
-		}
-		if (args.length > 2) {
-			sender.sendMessage(MessageType.ERROR, "To many arguments!"); 
-			return false;
+		} else if (args.length > 2) {
+			sender.sendMessage(MessageType.ERROR, "To many arguments!");
 		} else if (args.length < 2) {
 			sender.sendMessage(MessageType.ERROR, "Not enough arguments!");
-			return false;
+		} else if (Main.getClient() != null || Main.getServer() != null) {
+			sender.sendMessage(MessageType.ERROR, "Already connected as client!");
 		} else {
-			sender.sendMessage(MessageType.INFO, "Try to connect to " + args[0] + ":" + args[1] + " !");
+			sender.sendMessage(MessageType.INFO, "Try to connect to " + args[0] + ":" + args[1] + "!");
 			try {
 				Main.setClient(args[0], Integer.parseInt(args[1]));
 				sender.sendMessage(MessageType.INFO, "Connected!");
 				return true;
 			} catch (IOException exception) {
 				sender.sendMessage(MessageType.ERROR, "Can't connect to server!");
-				return false;
 			}
 		}
+		return false;
 	}
 
 }
