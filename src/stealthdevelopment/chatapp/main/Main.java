@@ -17,6 +17,7 @@ import eu.derzauberer.javautils.util.Sender.MessageType;
 import stealthdevelopment.chatapp.commands.ConnectCommand;
 import stealthdevelopment.chatapp.commands.DisconnectCommand;
 import stealthdevelopment.chatapp.commands.HostCommand;
+import stealthdevelopment.chatapp.commands.NameCommand;
 
 public class Main {
 	
@@ -34,6 +35,7 @@ public class Main {
 		clientCommands.registerCommand("/connect", new ConnectCommand());
 		clientCommands.registerCommand("/host", new HostCommand());
 		clientCommands.registerCommand("/disconnect", new DisconnectCommand());
+		serverCommands.registerCommand("/name", new NameCommand());
 		clientCommands.setOnCommandNotFound(event -> {
 			if (connected) client.sendMessage(event.getString()); 
 		});
@@ -44,6 +46,7 @@ public class Main {
 	public static void onConsoleInput(ConsoleInputEvent event) {
 		if (event.getInput().startsWith("/")) clientCommands.executeCommand(console, event.getInput());
 		else if (client != null) client.sendMessage(event.getInput()); 
+		else if (server != null) server.sendMessage("Server: " + event.getInput()); 
 	}
 	
 	public static void onServerMessageReceive(ClientMessageReceiveEvent event) {
@@ -120,6 +123,10 @@ public class Main {
 	
 	public static Console getConsole() {
 		return console;
+	}
+	
+	public static HashMap<Client, String> getNames() {
+		return names;
 	}
 	
 }
